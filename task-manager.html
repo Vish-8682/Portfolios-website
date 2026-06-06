@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Task Manager | Thiranex</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #fff; padding: 20px; }
+    .container { max-width: 600px; margin: 0 auto; }
+    h1 { text-align: center; margin-bottom: 20px; color: #38bdf8; }
+    .input-box { display: flex; gap: 10px; margin-bottom: 20px; }
+    input { flex: 1; padding: 12px; border: none; border-radius: 8px; background: #1e293b; color: #fff; }
+    button { padding: 12px 20px; border: none; border-radius: 8px; background: #38bdf8; color: #0f172a; font-weight: bold; cursor: pointer; }
+    button:hover { background: #0ea5e9; }
+    .filters { display: flex; gap: 10px; margin-bottom: 20px; justify-content: center; }
+    .filters button { background: #334155; color: #fff; }
+    .filters button.active { background: #38bdf8; color: #0f172a; }
+    .task { display: flex; justify-content: space-between; align-items: center; background: #1e293b; padding: 12px; border-radius: 8px; margin-bottom: 10px; }
+    .task.completed span { text-decoration: line-through; opacity: 0.6; }
+    .task-actions { display: flex; gap: 8px; }
+    .task-actions button { padding: 6px 10px; font-size: 12px; }
+    .delete { background: #ef4444; color: #fff; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Task Manager App</h1>
+    <div class="input-box">
+      <input type="text" id="taskInput" placeholder="Enter new task..." />
+      <button onclick="addTask()">Add Task</button>
+    </div>
+    <div class="filters">
+      <button onclick="setFilter('all')" class="active">All</button>
+      <button onclick="setFilter('active')">Active</button>
+      <button onclick="setFilter('completed')">Completed</button>
+    </div>
+    <div id="taskList"></div>
+  </div>
+
+  <script>
+    let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+    let filter = 'all';
+
+    function saveTasks() {
+      localStorage.setItem('tasks', JSON.stringify(tasks));
+      renderTasks();
+    }
+
+    function addTask() {
+      const input = document.getElementById('taskInput');
+      const text = input.value.trim();
+      if (text) {
+        tasks.push({ id: Date.now(), text, completed: false });
+        input.value = '';
+        saveTasks();
+      }
+    }
+
+    function toggleTask(id) {
+      tasks = tasks.map(t => t.id === id ? {...t, completed: !t.completed} : t);
+      saveTasks();
+    }
+
+    function deleteTask(id) {
+      tasks = tasks.filter(t => t.id !== id);
+      saveTasks();
+    }
+
+    function setFilter(f) {
+      filter = f;
+      document.querySelectorAll('.filters button').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+      renderTasks();
+    }
+
+    function renderTasks() {
+      const list = document.getElementById('taskList');
+      let filtered = tasks;
+      if (filter === 'active') filtered = tasks.filter(t => !t.completed);
+      if (filter === 'completed') filtered = tasks.filter(t => t.completed);
+      
+      list.innerHTML = filtered.map(task => `
+        <div class="task ${task.completed ? 'completed' : ''}">
+          <span onclick="toggleTask(${task.id})" style="cursor:pointer">${task.text}</span>
+          <div class="task-actions">
+            <button onclick="toggleTask(${task.id})">${task.completed ? 'Undo' : 'Done'}</button>
+            <button class="delete" onclick="deleteTask(${task.id})">Delete</button>
+          </div>
+        </div>
+      `).join('') || '<p style="text-align:center;opacity:0.6">No tasks yet</p>';
+    }
+
+    renderTasks();
+  </script>
+</body>
+</html>
